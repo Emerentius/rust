@@ -49,7 +49,7 @@ use core::iter::FusedIterator;
 
 use borrow::{Borrow, ToOwned};
 use boxed::Box;
-use slice::{SliceConcatExt, SliceIndex};
+use slice::{SliceConcatExt, SliceIndex, join_generic_copy};
 use string::String;
 use vec::Vec;
 use vec_deque::VecDeque;
@@ -87,47 +87,13 @@ impl<S: Borrow<str>> SliceConcatExt<str> for [S] {
     type Output = String;
 
     fn concat(&self) -> String {
-        if self.is_empty() {
-            return String::new();
-        }
-
-        // `len` calculation may overflow but push_str will check boundaries
-        let len = self.iter().map(|s| s.borrow().len()).sum();
-        let mut result = String::with_capacity(len);
-
-        for s in self {
-            result.push_str(s.borrow())
-        }
-
-        result
+        self.join("")
     }
 
     fn join(&self, sep: &str) -> String {
-        if self.is_empty() {
-            return String::new();
+        unsafe {
+            String::from_utf8_unchecked( join_generic_copy(self, sep.as_bytes()) )
         }
-
-        // concat is faster
-        if sep.is_empty() {
-            return self.concat();
-        }
-
-        // this is wrong without the guarantee that `self` is non-empty
-        // `len` calculation may overflow but push_str but will check boundaries
-        let len = sep.len() * (self.len() - 1) +
-                  self.iter().map(|s| s.borrow().len()).sum::<usize>();
-        let mut result = String::with_capacity(len);
-        let mut first = true;
-
-        for s in self {
-            if first {
-                first = false;
-            } else {
-                result.push_str(sep);
-            }
-            result.push_str(s.borrow());
-        }
-        result
     }
 
     fn connect(&self, sep: &str) -> String {
