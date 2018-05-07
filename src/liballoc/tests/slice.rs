@@ -610,6 +610,20 @@ fn test_join() {
 }
 
 #[test]
+fn test_join_nocopy() {
+    let v: [Vec<String>; 0] = [];
+    let comma = String::new(",");
+    assert_eq!(v.join(&",".into()), []);
+    assert_eq!(["a".into(), "ab".into()].join(comma), "a,ab");
+    assert_eq!(["a".into(), "ab".into(), "abc".into()].join(comma), "a,ab,abc");
+
+    let v: [&[_]; 2] = [&["a".into()], &["a".into(), "b".into()]];
+    assert_eq!(v.join(comma), "a,ab");
+    let v: [&[_]; 2] = [&["a".into()], &["b".into()], ["c".into()]];
+    assert_eq!(v.join(comma), "a,b,c");
+}
+
+#[test]
 fn test_insert() {
     let mut a = vec![1, 2, 4];
     a.insert(2, 3);
