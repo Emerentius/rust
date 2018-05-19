@@ -836,6 +836,54 @@ macro_rules! float_sum_product {
 integer_sum_product! { i8 i16 i32 i64 i128 isize u8 u16 u32 u64 u128 usize }
 float_sum_product! { f32 f64 }
 
+#[stable(feature = "iter_arith_traits_option", since="1.29.0")]
+impl<T> Sum<T> for Option<T>
+where
+    T: Add<Output=T>
+{
+    /// Computes the sum of all elements in the iter and returns `Some(sum)` if the iter is not empty.
+    /// Returns `None` otherwise. This uses the first value in the iterator as starting point and therefore
+    /// requires no neutral element.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let empty_sum = (1..1).sum::<Option<i32>>();
+    /// assert_eq!(empty_sum, None);
+    ///
+    /// let non_empty_sum = (1..=10).sum::<Option<i32>>();
+    /// assert_eq!(non_empty_sum, Some(55));
+    /// ```
+    fn sum<I: Iterator<Item=T>>(mut iter: I) -> Self {
+        iter.next()
+            .map(|first| iter.fold(first, Add::add))
+    }
+}
+
+#[stable(feature = "iter_arith_traits_option", since="1.29.0")]
+impl<T> Product<T> for Option<T>
+where
+    T: Mul<Output=T>
+{
+    /// Computes the product of all elements in the iter and returns `Some(product)` if the iter is not empty.
+    /// Returns `None` otherwise. This uses the first value in the iterator as starting point and therefore
+    /// requires no neutral element.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let empty_product = (1..1).product::<Option<i32>>();
+    /// assert_eq!(empty_product, None);
+    ///
+    /// let non_empty_product = (1..=10).product::<Option<i32>>();
+    /// assert_eq!(non_empty_product, Some(3628800));
+    /// ```
+    fn product<I: Iterator<Item=T>>(mut iter: I) -> Self {
+        iter.next()
+            .map(|first| iter.fold(first, Mul::mul))
+    }
+}
+
 /// An iterator adapter that produces output as long as the underlying
 /// iterator produces `Result::Ok` values.
 ///
